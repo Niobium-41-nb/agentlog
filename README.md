@@ -38,7 +38,7 @@ node agentlog.mjs .
 
 不想装 Node.js 的话，用单文件可执行程序：
 
-1. 到 [Releases](../../releases) 下载 `agentlog-v1.0.0-windows-x64.zip`，解压得到 `agentlog.exe`；
+1. 到 [Releases](https://github.com/Niobium-41-nb/agentlog/releases/latest) 下载 `agentlog-v1.0.0-windows-x64.zip`，解压得到 `agentlog.exe`；
 2. **双击 `agentlog.exe`** —— 不带参数运行会自动弹出 Windows 原生图形界面；
 3. 命令行用法与 `node agentlog.mjs` 完全一致，只是不用写 `node` 和脚本名：
 
