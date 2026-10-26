@@ -1,0 +1,22 @@
+# 构建产物（exe 体积大，只随 GitHub Release 分发，不进仓库）
+dist/
+.build/
+
+# 采集结果（用户数据，不进仓库）
+.agent-logs/
+
+# 依赖
+node_modules/
+
+# 本地工作区数据
+.workbuddy/
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.log

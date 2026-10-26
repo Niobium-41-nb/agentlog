@@ -1,0 +1,36 @@
+name: build-exe
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 构建 agentlog.exe
+        run: node build-exe.mjs --out dist
+
+      - name: 冒烟测试
+        run: |
+          .\dist\agentlog.exe --version
+          .\dist\agentlog.exe --self-test
+
+      - name: 压缩
+        shell: pwsh
+        run: Compress-Archive -Path dist/agentlog.exe -DestinationPath agentlog-windows-x64.zip
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentlog-windows-x64
+          path: agentlog-windows-x64.zip
+          if-no-files-found: error
