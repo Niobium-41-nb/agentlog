@@ -66,6 +66,7 @@ $script:Agents = @(
     @{ Id = 'deepseek-harness'; Name = 'DeepSeek Harness' }
     @{ Id = 'opencode';         Name = 'opencode' }
     @{ Id = 'qoder';            Name = 'Qoder' }
+    @{ Id = 'qoder-cn';         Name = 'Qoder CN' }
     @{ Id = 'copilot';          Name = 'GitHub Copilot' }
     @{ Id = 'copilot-cli';      Name = 'Copilot CLI' }
     @{ Id = 'claude-code';      Name = 'Claude Code' }

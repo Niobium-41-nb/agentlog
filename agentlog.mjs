@@ -7,6 +7,7 @@
  *   - DeepSeek Harness     ~/.dsh/sessions/<项目>/session-<id>/session.v4.jsonl.zstd（多帧 zstd）
  *   - opencode             ~/.local/share/opencode/opencode.db（SQLite）
  *   - Qoder                ~/.qoder/projects/<项目>/*.jsonl
+ *   - Qoder CN             ~/.qoder-cn/projects/<项目>/*.jsonl
  *   - GitHub Copilot       VS Code 系 workspaceStorage/<hash>/chatSessions/*.jsonl|*.json
  *   - GitHub Copilot CLI   ~/.copilot/session-state/<id>/{workspace.yaml,events.jsonl}
  *   - Claude Code（附加）  ~/.claude/projects/<项目>/*.jsonl
@@ -850,6 +851,20 @@ function collectQoder(ctx) {
   return { sessions, probes };
 }
 
+/* ─────────────── 4b. Qoder CN（国内版，同为 Claude 风格 JSONL） ─────────────── */
+
+function collectQoderCn(ctx) {
+  const root = existingDir(path.join(HOME, '.qoder-cn', 'projects'));
+  if (!root) return { sessions: [], probes: ['~/.qoder-cn/projects（不存在）'] };
+  const { sessions, probes } = collectClaudeStyle(root, {
+    agent: 'qoder-cn',
+    agentLabel: 'Qoder CN',
+    ctx,
+    probePrefix: '~/.qoder-cn/projects',
+  });
+  return { sessions, probes };
+}
+
 /* ─────────────── 5. GitHub Copilot（VS Code 系） ─────────────── */
 
 function vscodeAppDataDirs() {
@@ -1156,7 +1171,7 @@ function collectClaudeCode(ctx) {
   });
 }
 
-/** Qoder 与 Claude Code 共用 Claude 的 JSONL 会话格式 */
+/** Qoder / Qoder CN 与 Claude Code 共用 Claude 的 JSONL 会话格式 */
 function collectClaudeStyle(root, { agent, agentLabel, ctx, probePrefix }) {
   const sessions = [];
   const probes = [];
@@ -1191,6 +1206,8 @@ function parseClaudeStyleFile(file, agent, agentLabel) {
   for (const r of lines) {
     if (!r || typeof r !== 'object') continue;
     if (r.cwd) cwd = cwd || r.cwd;
+    // Qoder CN 首条 workspace-directories 记录也带工作区路径，作为 cwd 兜底
+    if (!cwd && r.type === 'workspace-directories' && Array.isArray(r.directories)) cwd = r.directories[0] || '';
     if (r.sessionId) sessionId = r.sessionId;
     if (r.type === 'summary' && r.summary) {
       title = title || r.summary;
@@ -1342,7 +1359,7 @@ function firstUserLine(session) {
 
 /* ═══════════════════════════════ 渲染 ═══════════════════════════════ */
 
-const AGENT_ORDER = ['workbuddy', 'deepseek-harness', 'opencode', 'qoder', 'copilot', 'copilot-cli', 'claude-code'];
+const AGENT_ORDER = ['workbuddy', 'deepseek-harness', 'opencode', 'qoder', 'qoder-cn', 'copilot', 'copilot-cli', 'claude-code'];
 
 function renderSessionMd(session, opts) {
   const st = sessionStats(session);
@@ -1545,6 +1562,7 @@ const PROBE_LABELS = {  workbuddy: 'WorkBuddy（~/.workbuddy/projects）',
   'deepseek-harness': 'DeepSeek Harness（~/.dsh/sessions）',
   opencode: 'opencode（~/.local/share/opencode/opencode.db）',
   qoder: 'Qoder（~/.qoder/projects）',
+  'qoder-cn': 'Qoder CN（~/.qoder-cn/projects）',
   copilot: 'GitHub Copilot（VS Code workspaceStorage/chatSessions）',
   'copilot-cli': 'GitHub Copilot CLI（~/.copilot/session-state）',
   'claude-code': 'Claude Code（~/.claude/projects）',
@@ -1631,6 +1649,7 @@ const ADAPTERS = [
   { id: 'deepseek-harness', label: 'DeepSeek Harness', collect: collectDeepseekHarness },
   { id: 'opencode', label: 'opencode', collect: collectOpencode },
   { id: 'qoder', label: 'Qoder', collect: collectQoder },
+  { id: 'qoder-cn', label: 'Qoder CN', collect: collectQoderCn },
   { id: 'copilot', label: 'GitHub Copilot', collect: collectCopilotVSCode },
   { id: 'copilot-cli', label: 'GitHub Copilot CLI', collect: collectCopilotCli },
   { id: 'claude-code', label: 'Claude Code', collect: collectClaudeCode },
@@ -1779,7 +1798,7 @@ function printHelp() {
 常用：
   -o, --out <目录>          输出目录（默认 <工作区>/.agent-logs）
   --agents <列表>           只导出指定 Agent，逗号分隔：
-                            workbuddy, deepseek-harness, opencode, qoder, copilot, copilot-cli, claude-code
+                            workbuddy, deepseek-harness, opencode, qoder, qoder-cn, copilot, copilot-cli, claude-code
   --since <日期>            只保留该时间之后的会话，如 2026-10-01 或 "2026-10-01 12:00"
   --until <日期>            只要该时间之前的会话
   --redact                  脱敏：邮箱、手机号、本机用户名路径（API Key/Token 始终自动打码）
@@ -1808,6 +1827,7 @@ function printHelp() {
   DeepSeek Harness     ~/.dsh/sessions/<项目>/session-*/session.v4.jsonl.zstd
   opencode             ~/.local/share/opencode/opencode.db（SQLite）
   Qoder                ~/.qoder/projects/<项目>/*.jsonl
+  Qoder CN             ~/.qoder-cn/projects/<项目>/*.jsonl
   GitHub Copilot       <AppData>/Code/User/workspaceStorage/<hash>/chatSessions/*
   GitHub Copilot CLI   ~/.copilot/session-state/<id>/events.jsonl
   Claude Code          ~/.claude/projects/<项目>/*.jsonl
@@ -1840,6 +1860,7 @@ function describeRoot(id) {
     workbuddy: path.join(HOME, '.workbuddy', 'projects'),
     'deepseek-harness': path.join(HOME, '.dsh', 'sessions'),
     qoder: path.join(HOME, '.qoder', 'projects'),
+    'qoder-cn': path.join(HOME, '.qoder-cn', 'projects'),
     'copilot-cli': path.join(HOME, '.copilot', 'session-state'),
     'claude-code': path.join(HOME, '.claude', 'projects'),
   };

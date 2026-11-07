@@ -38,7 +38,7 @@ node agentlog.mjs .
 
 不想装 Node.js 的话，用单文件可执行程序：
 
-1. 到 [Releases](../../releases) 下载 `agentlog-v1.0.0-windows-x64.zip`，解压得到 `agentlog.exe`；
+1. 到 [Releases](https://github.com/Niobium-41-nb/agentlog/releases/latest) 下载 `agentlog-v1.0.0-windows-x64.zip`，解压得到 `agentlog.exe`；
 2. **双击 `agentlog.exe`** —— 不带参数运行会自动弹出 Windows 原生图形界面；
 3. 命令行用法与 `node agentlog.mjs` 完全一致，只是不用写 `node` 和脚本名：
 
@@ -82,7 +82,7 @@ node build-exe.mjs --keep          # 保留中间产物便于排查
 界面能做的事：
 
 - 选工作区 → 自动带出输出目录（也可另存）
-- 勾选要采集哪些 Agent（7 个全支持）
+- 勾选要采集哪些 Agent（8 个全支持）
 - 选项：含工具调用 / 脱敏 / 含思考过程 / 合并时间线 / 起止时间
 - 点「导出记录」后，下方列表直接列出会话（Agent、标题、时间、轮次、工具次数），**双击即可用系统默认程序打开该会话的 Markdown**
 - 「环境自检」会检查 Node、各 Agent 日志目录是否就位
@@ -108,6 +108,7 @@ powershell -ExecutionPolicy Bypass -File agentlog-gui.ps1 -Export "D:\proj"  # �
 | **DeepSeek Harness** | `~/.dsh/sessions/<项目>/session-<id>/session.v4.jsonl.zstd` | 多帧 zstd 压缩 JSONL | 已验证 |
 | **opencode** | `~/.local/share/opencode/opencode.db`（Windows 亦查 `%LOCALAPPDATA%`） | SQLite | 已验证 |
 | **Qoder** | `~/.qoder/projects/<项目>/*.jsonl` | JSONL（Claude 风格） | 已验证 |
+| **Qoder CN** | `~/.qoder-cn/projects/<项目>/*.jsonl` | JSONL（Claude 风格） | 已验证 |
 | **GitHub Copilot** | `<AppData>/<Code>/User/workspaceStorage/<hash>/chatSessions/*.jsonl` | 快照 + 增量 patch | 已验证 |
 | **GitHub Copilot CLI** | `~/.copilot/session-state/<id>/events.jsonl` | 事件流 JSONL | 已验证 |
 | **Claude Code**（附加） | `~/.claude/projects/<项目>/*.jsonl` | JSONL（Claude 风格） | 已验证 |
@@ -121,7 +122,7 @@ powershell -ExecutionPolicy Bypass -File agentlog-gui.ps1 -Export "D:\proj"  # �
 - **DeepSeek Harness** 的会话是**多帧 zstd 追加写**的假 JSONL，标准解压器只解第一帧，需要按帧头切分逐帧解压；
 - **opencode** 把会话存在 SQLite 里，且运行时处于 WAL 模式，直接读会撞锁，先拷贝快照再读；
 - **GitHub Copilot** 新版日志是「一次全量快照 + 若干增量 patch」，其中 `requests` 数组是**追加语义**、流式正文是**带下标的续写语义**，猜错会丢一半对话；
-- **WorkBuddy / Qoder** 会把 `<system-reminder>`、`<user_info>` 这类系统注入块拼进用户消息里，导出时会剥掉，只留你真正打的那句话；
+- **WorkBuddy / Qoder 系** 会把 `<system-reminder>`、`<user_info>` 这类系统注入块拼进用户消息里，导出时会剥掉，只留你真正打的那句话；
 - **DeepSeek Harness** 还会把「审批结果」「运行时上下文」「技能清单」也记成用户消息，会按 `source.kind` 过滤掉，否则时间线全是噪音；
 - 路径匹配统一处理了大小写、正反斜杠、`file:///d%3A/...` 百分号编码，以及远程开发（`vscode-remote://`）路径。
 
@@ -175,7 +176,7 @@ node agentlog.mjs . --reasoning
 | --- | --- |
 | `[工作区目录]` | 要采集的工作区，省略则用当前目录 |
 | `-o, --out <目录>` | 输出目录，默认 `<工作区>/.agent-logs` |
-| `--agents <列表>` | 只导出指定 Agent，逗号分隔：`workbuddy,deepseek-harness,opencode,qoder,copilot,copilot-cli,claude-code` |
+| `--agents <列表>` | 只导出指定 Agent，逗号分隔：`workbuddy,deepseek-harness,opencode,qoder,qoder-cn,copilot,copilot-cli,claude-code` |
 | `--since <日期>` | 只要该时间之后有消息的会话，支持 `2026-10-01` 或 `"2026-10-01 12:00"` |
 | `--until <日期>` | 只要该时间之前有消息的会话 |
 | `--redact` | 脱敏：邮箱、手机号、本机用户名路径（API Key / Token 始终自动打码） |
@@ -273,7 +274,7 @@ function collectMyAgent(ctx) {
 ## 仓库结构
 
 ```
-agentlog.mjs          采集引擎（7 个 Agent 适配器 + 渲染 + 脱敏，单文件、零依赖）
+agentlog.mjs          采集引擎（8 个 Agent 适配器 + 渲染 + 脱敏，单文件、零依赖）
 agentlog-gui.ps1      Windows 原生图形界面（WinForms，单文件）
 build-exe.mjs         打包脚本：产出单文件 agentlog.exe
 agentlog.cmd          命令行启动器（自动找 Node）
